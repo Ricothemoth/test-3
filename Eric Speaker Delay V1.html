@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sound Source Distance Calculation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .source-info {
+            margin-top: 20px;
+        }
+
+        .measurement-input {
+            margin-bottom: 10px;
+        }
+
+        .measurement-input label {
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Sound Source Distance Calculation</h1>
+        <p>This program calculates the trigonometric distance and time delay in milliseconds from each sound source.</p>
+
+        <form id="calculationForm">
+            <label for="temperature">Temperature (in Celsius):</label>
+            <input type="number" id="temperature" required step="0.01"><br>
+
+            <div class="source-info">
+                <h2>HF</h2>
+                <div class="measurement-input">
+                    <label for="hfDistance">Distance (feet):</label>
+                    <input type="number" id="hfDistance" required step="0.01">
+                </div>
+                <div class="measurement-input">
+                    <label for="hfHeight">Height (feet):</label>
+                    <input type="number" id="hfHeight" required step="0.01">
+                </div>
+            </div>
+
+            <div class="source-info">
+                <h2>Woofer</h2>
+                <div class="measurement-input">
+                    <label for="wooferDistance">Distance (feet):</label>
+                    <input type="number" id="wooferDistance" required step="0.01">
+                </div>
+                <div class="measurement-input">
+                    <label for="wooferHeight">Height (feet):</label>
+                    <input type="number" id="wooferHeight" required step="0.01">
+                </div>
+            </div>
+
+            <div class="source-info">
+                <h2>Sub</h2>
+                <div class="measurement-input">
+                    <label for="subDistance">Distance (feet):</label>
+                    <input type="number" id="subDistance" required step="0.01">
+                </div>
+                <div class="measurement-input">
+                    <label for="subHeight">Height (feet):</label>
+                    <input type="number" id="subHeight" required step="0.01">
+                </div>
+            </div>
+
+            <!-- Add an input field for the height of the arrival location -->
+            <label for="arrivalHeight">Listener's Height (feet):</label>
+            <input type="number" id="arrivalHeight" required step="0.01"><br>
+
+            <!-- Add a checkbox to include or exclude listener's height in the calculation -->
+            <label for="includeListenerHeight">Include Listener's Height</label>
+            <input type="checkbox" id="includeListenerHeight" checked><br>
+
+            <button type="button" onclick="calculateDistance()">Calculate Distance</button>
+        </form>
+
+        <h2>Results</h2>
+        <p id="hfResult"></p>
+        <p id="wooferResult"></p>
+        <p id="subResult"></p>
+        <p id="timeDelayResult"></p>
+    </div>
+
+    <script>
+        function calculateDistance() {
+            const temperatureInput = document.getElementById('temperature');
+            const hfDistanceInput = document.getElementById('hfDistance');
+            const hfHeightInput = document.getElementById('hfHeight');
+            const wooferDistanceInput = document.getElementById('wooferDistance');
+            const wooferHeightInput = document.getElementById('wooferHeight');
+            const subDistanceInput = document.getElementById('subDistance');
+            const subHeightInput = document.getElementById('subHeight');
+            const arrivalHeightInput = document.getElementById('arrivalHeight');
+            const includeListenerHeightCheckbox = document.getElementById('includeListenerHeight');
+
+            const temperature = parseFloat(temperatureInput.value);
+            const hfDistance = parseFloat(hfDistanceInput.value);
+            const hfHeight = parseFloat(hfHeightInput.value);
+            const wooferDistance = parseFloat(wooferDistanceInput.value);
+            const wooferHeight = parseFloat(wooferHeightInput.value);
+            const subDistance = parseFloat(subDistanceInput.value);
+            const subHeight = parseFloat(subHeightInput.value);
+            const arrivalHeight = parseFloat(arrivalHeightInput.value);
+            const includeListenerHeight = includeListenerHeightCheckbox.checked;
+
+            // Check if input values are valid
+            if (!isValidNumber(temperature) || !isValidNumber(hfDistance) || !isValidNumber(hfHeight) ||
+                !isValidNumber(wooferDistance) || !isValidNumber(wooferHeight) || !isValidNumber(subDistance) ||
+                !isValidNumber(subHeight) || !isValidNumber(arrivalHeight)) {
+                alert('Please enter valid numeric values for all input fields.');
+                return;
+            }
+
+            // Adjust the speed of sound based on temperature in feet per second
+            const speedOfSoundInFeetPerSecond = 1125.35 * Math.sqrt(1 + (Math.abs(temperature) / 273.15));
+
+            // Calculate trigonometric distance for each source with or without height adjustment
+            let hfTrigDistance, wooferTrigDistance, subTrigDistance;
+
+            if (includeListenerHeight) {
+                hfTrigDistance = Math.sqrt(Math.pow(hfDistance, 2) + Math.pow(hfHeight - arrivalHeight, 2));
+                wooferTrigDistance = Math.sqrt(Math.pow(wooferDistance, 2) + Math.pow(wooferHeight - arrivalHeight, 2));
+                subTrigDistance = Math.sqrt(Math.pow(subDistance, 2) + Math.pow(subHeight - arrivalHeight, 2));
+            } else {
+                hfTrigDistance = Math.sqrt(Math.pow(hfDistance, 2) + Math.pow(hfHeight, 2));
+                wooferTrigDistance = Math.sqrt(Math.pow(wooferDistance, 2) + Math.pow(wooferHeight, 2));
+                subTrigDistance = Math.sqrt(Math.pow(subDistance, 2) + Math.pow(subHeight, 2));
+            }
+
+            // Calculate time delay in milliseconds
+            const hfTimeDelay = (hfTrigDistance / speedOfSoundInFeetPerSecond) * 1000;
+            const wooferTimeDelay = (wooferTrigDistance / speedOfSoundInFeetPerSecond) * 1000;
+            const subTimeDelay = (subTrigDistance / speedOfSoundInFeetPerSecond) * 1000;
+
+            // Display the results
+            document.getElementById('hfResult').innerHTML = `HF Trigonometric Distance: ${hfTrigDistance.toFixed(2)} feet`;
+            document.getElementById('wooferResult').innerHTML = `Woofer Trigonometric Distance: ${wooferTrigDistance.toFixed(2)} feet`;
+            document.getElementById('subResult').innerHTML = `Sub Trigonometric Distance: ${subTrigDistance.toFixed(2)} feet`;
+
+            document.getElementById('timeDelayResult').innerHTML = `Time Delay to HF: ${hfTimeDelay.toFixed(2)} ms<br>
+                                                                    Time Delay to Woofer: ${wooferTimeDelay.toFixed(2)} ms<br>
+                                                                    Time Delay to Sub: ${subTimeDelay.toFixed(2)} ms`;
+        }
+
+        function isValidNumber(value) {
+            return !isNaN(parseFloat(value)) && isFinite(value);
+        }
+    </script>
+</body>
+</html>
